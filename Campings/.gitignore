@@ -1,0 +1,39 @@
+# === Android / Gradle ===
+.gradle/
+build/
+*/build/
+
+# === Configuración local ===
+local.properties
+
+# === Android Studio / IntelliJ ===
+.idea/
+*.iml
+
+# === VS Code ===
+.vscode/
+
+# === Archivos del sistema ===
+.DS_Store
+Thumbs.db
+
+# === Logs ===
+*.log
+
+# === Native / NDK ===
+.externalNativeBuild/
+.cxx/
+
+# === Kotlin ===
+*.kotlin_module
+
+# === APK / AAB ===
+*.apk
+*.aab
+
+# === Keystores ===
+*.jks
+*.keystore
+
+# === Otros ===
+captures/
