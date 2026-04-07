@@ -5,7 +5,6 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.res.Resources
 import android.location.Geocoder
 import android.location.Location
 import android.location.LocationManager
@@ -24,18 +23,36 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -57,7 +74,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -123,13 +139,29 @@ fun CampingsRoot(favoriteRepository: FavoriteCampingRepository) {
 @Composable
 fun SplashScreen() {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "Campings CV")
+        Icon(
+            imageVector = Icons.Default.Map,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(68.dp)
+        )
+        Text(
+            text = "Campings CV",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(top = 8.dp)
+        )
         CircularProgressIndicator(modifier = Modifier.padding(top = 12.dp))
-        Text(text = "Cargando campings...", modifier = Modifier.padding(top = 12.dp))
+        Text(
+            text = "Cargando campings...",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(top = 12.dp)
+        )
     }
 }
 
@@ -142,10 +174,27 @@ fun CampingsErrorScreen(message: String, onRetry: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "No se pudieron descargar los datos")
-        Text(text = message, modifier = Modifier.padding(top = 8.dp))
-        TextButton(onClick = onRetry, modifier = Modifier.padding(top = 12.dp)) {
-            Text("Reintentar")
+        ElevatedCard {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CloudOff,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(44.dp)
+                )
+                Text(
+                    text = "No se pudieron descargar los datos",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(text = message, style = MaterialTheme.typography.bodyMedium)
+                TextButton(onClick = onRetry) {
+                    Text("Reintentar")
+                }
+            }
         }
     }
 }
@@ -162,6 +211,16 @@ private enum class SortField {
     CATEGORY,
     PLAZAS,
     DISTANCE
+}
+
+private fun sortLabel(sortField: String, ascending: Boolean): String {
+    val fieldLabel = when (SortField.valueOf(sortField)) {
+        SortField.NAME -> "nombre"
+        SortField.CATEGORY -> "categoria"
+        SortField.PLAZAS -> "plazas"
+        SortField.DISTANCE -> "distancia"
+    }
+    return "$fieldLabel (${if (ascending) "asc" else "desc"})"
 }
 
 @Composable
@@ -329,10 +388,16 @@ fun CampingListScreen(
                         listState.animateScrollToItem(0)
                     }
                 }) {
-                    Text("^")
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowUp,
+                        contentDescription = "Subir al inicio"
+                    )
                 }
                 FloatingActionButton(onClick = onOpenFavorites) {
-                    Text("Fav")
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = "Abrir favoritos"
+                    )
                 }
             }
         },
@@ -340,11 +405,21 @@ fun CampingListScreen(
             TopAppBar(
                 title = { Text("Campings CV") },
                 actions = {
-                    TextButton(onClick = { ascending = !ascending }) {
-                        Text(if (ascending) "Asc" else "Desc")
+                    IconButton(onClick = { ascending = !ascending }) {
+                        Icon(
+                            imageVector = if (ascending) {
+                                Icons.Default.ArrowUpward
+                            } else {
+                                Icons.Default.ArrowDownward
+                            },
+                            contentDescription = "Cambiar direccion de orden"
+                        )
                     }
                     IconButton(onClick = { isMenuOpen = true }) {
-                        Text("...")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Sort,
+                            contentDescription = "Ordenar"
+                        )
                     }
                     DropdownMenu(
                         expanded = isMenuOpen,
@@ -395,6 +470,9 @@ fun CampingListScreen(
                 onValueChange = { searchText = it },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Buscar por nombre o ubicacion") },
+                leadingIcon = {
+                    Icon(imageVector = Icons.Default.Search, contentDescription = null)
+                },
                 singleLine = true
             )
 
@@ -403,10 +481,19 @@ fun CampingListScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = locationStatus,
-                    style = MaterialTheme.typography.labelMedium
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = locationStatus,
+                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                }
                 TextButton(onClick = {
                     val hasPermission = ContextCompat.checkSelfPermission(
                         context,
@@ -420,7 +507,14 @@ fun CampingListScreen(
                         permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                     }
                 }) {
-                    Text("Usar mi ubicacion")
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.MyLocation,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text("Usar mi ubicacion", modifier = Modifier.padding(start = 6.dp))
+                    }
                 }
             }
 
@@ -447,7 +541,7 @@ fun CampingListScreen(
             }
 
             Text(
-                text = "Resultados: ${filteredSortedCampings.size}",
+                text = "Resultados: ${filteredSortedCampings.size}  |  Orden: ${sortLabel(sortField, ascending)}",
                 style = MaterialTheme.typography.labelMedium
             )
 
@@ -489,20 +583,29 @@ fun CampingDetailScreen(
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = onOpenFavorites) {
-                Text("Fav")
+                Icon(
+                    imageVector = Icons.Default.Favorite,
+                    contentDescription = "Abrir favoritos"
+                )
             }
         },
         topBar = {
             TopAppBar(
                 title = { Text(camping.nombre) },
                 navigationIcon = {
-                    TextButton(onClick = onBack) {
-                        Text("Volver")
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver"
+                        )
                     }
                 },
                 actions = {
                     IconButton(onClick = { isMenuOpen = true }) {
-                        Text("...")
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "Mas acciones"
+                        )
                     }
                     DropdownMenu(
                         expanded = isMenuOpen,
@@ -536,7 +639,7 @@ fun CampingDetailScreen(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             item {
-                Card(colors = CardDefaults.cardColors()) {
+                ElevatedCard {
                     Column(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -549,12 +652,12 @@ fun CampingDetailScreen(
             }
 
             item {
-                Card(colors = CardDefaults.cardColors()) {
+                ElevatedCard {
                     Column(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(text = "Favoritos", fontWeight = FontWeight.Bold)
+                        Text(text = "Favoritos", style = MaterialTheme.typography.titleMedium)
                         Text(
                             text = if (isFavorite) "Este camping esta en favoritos" else "Este camping no esta en favoritos"
                         )
@@ -567,7 +670,15 @@ fun CampingDetailScreen(
                                 }
                             }
                         }) {
-                            Text(if (isFavorite) "Quitar de favoritos" else "Anadir a favoritos")
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                if (isFavorite) "Quitar de favoritos" else "Anadir a favoritos",
+                                modifier = Modifier.padding(start = 6.dp)
+                            )
                         }
                     }
                 }
@@ -631,15 +742,21 @@ fun FavoritesScreen(
                     listState.animateScrollToItem(0)
                 }
             }) {
-                Text("^")
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowUp,
+                    contentDescription = "Subir al inicio"
+                )
             }
         },
         topBar = {
             TopAppBar(
                 title = { Text("Campings favoritos") },
                 navigationIcon = {
-                    TextButton(onClick = onBack) {
-                        Text("Volver")
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver"
+                        )
                     }
                 }
             )
@@ -654,7 +771,13 @@ fun FavoritesScreen(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Todavia no tienes favoritos")
+                Icon(
+                    imageVector = Icons.Default.FavoriteBorder,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(42.dp)
+                )
+                Text("Todavia no tienes favoritos", modifier = Modifier.padding(top = 8.dp))
             }
         } else {
             LazyColumn(
@@ -684,12 +807,12 @@ fun FavoritesScreen(
 
 @Composable
 fun DetailSectionCard(title: String, lines: List<String>) {
-    Card(colors = CardDefaults.cardColors()) {
+    ElevatedCard {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(text = title, fontWeight = FontWeight.Bold)
+            Text(text = title, style = MaterialTheme.typography.titleMedium)
             lines.forEach { line ->
                 Text(text = line)
             }
@@ -706,6 +829,12 @@ fun CampingNotFoundScreen(onBack: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Icon(
+            imageVector = Icons.Default.Map,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(36.dp)
+        )
         Text(text = "No se encontro el camping seleccionado")
         TextButton(onClick = onBack) {
             Text("Volver")
@@ -724,11 +853,17 @@ fun CampingItem(
 ) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors()
+        colors = CardDefaults.cardColors(
+            containerColor = if (isFavorite) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -737,29 +872,75 @@ fun CampingItem(
             ) {
                 Text(
                     text = camping.nombre,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f)
                 )
                 if (onToggleFavorite != null) {
-                    TextButton(onClick = onToggleFavorite) {
-                        Text(if (isFavorite) "Quitar" else "Favorito")
+                    IconButton(onClick = onToggleFavorite) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = if (isFavorite) "Quitar favorito" else "Marcar favorito",
+                            tint = if (isFavorite) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                        )
                     }
                 }
             }
-            Text(text = "Categoria: ${camping.categoria}")
-            Text(text = "Ubicacion: ${camping.municipio} (${camping.provincia})")
-            Text(text = "Plazas: ${camping.plazas}")
+
+            Text(
+                text = "${camping.categoria}  |  ${camping.plazas} plazas",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = "${camping.municipio} (${camping.provincia})",
+                    modifier = Modifier.padding(start = 4.dp),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
             if (showDistance) {
                 if (distanceKm != null) {
-                    Text(text = "Distancia: ${formatDistanceKm(distanceKm)}")
+                    Text(
+                        text = "Distancia: ${formatDistanceKm(distanceKm)}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 } else {
-                    Text(text = "Distancia: no disponible")
+                    Text(text = "Distancia: no disponible", style = MaterialTheme.typography.bodyMedium)
                 }
             }
             if (isFavorite) {
-                Text(text = "Guardado en favoritos")
+                Text(
+                    text = "Guardado en favoritos",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
             if (camping.web.isNotBlank()) {
-                Text(text = "Web: ${camping.web}")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Public,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = camping.web,
+                        modifier = Modifier.padding(start = 4.dp),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
         }
     }
